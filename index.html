@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<!-- saved from url=(0061)file:///C:/Users/ggvar/Downloads/daily-stop-calculator_4.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Stop Calculator</title>
+<link href="./Daily Stop Calculator_files/css2" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e0f11;
+    --surface:   #16181c;
+    --surface2:  #1e2026;
+    --border:    #2a2d35;
+    --border2:   #363a44;
+    --text:      #e8eaf0;
+    --muted:     #7a7f8e;
+    --dim:       #4a4f5c;
+    --accent:    #c8f060;
+    --accent-dk: #a3cc3a;
+    --red:       #ff5f5f;
+    --amber:     #ffb547;
+    --green:     #5be8a0;
+    --blue:      #5ab4ff;
+    --mono:      'DM Mono', monospace;
+    --sans:      'DM Sans', sans-serif;
+    --radius:    8px;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 560px; margin: 0 auto; padding: 20px 16px 32px; }
+
+  .header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+  }
+  .header-left { display: flex; align-items: baseline; gap: 10px; }
+  .header-title {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+  }
+  .header-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+    display: inline-block; margin-right: 6px; position: relative; top: -1px;
+  }
+  .date-label { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+
+  .section { margin-bottom: 16px; }
+  .section-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--dim); margin-bottom: 8px;
+  }
+
+  .equity-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 14px;
+  }
+  .equity-val { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--text); min-width: 80px; }
+
+  input[type=range] {
+    -webkit-appearance: none; flex: 1; height: 2px;
+    background: var(--border2); border-radius: 2px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); cursor: pointer; transition: transform .1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    font-family: var(--mono); font-size: 11px; padding: 5px 11px;
+    border-radius: 20px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); cursor: pointer; transition: all .15s; user-select: none; letter-spacing: .01em;
+  }
+  .pill:hover:not(.active) { border-color: var(--border2); color: var(--text); }
+  .pill.active { background: #1c2410; border-color: var(--accent-dk); color: var(--accent); font-weight: 500; }
+
+  /* Customize panel */
+  .custom-toggle {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 14px; cursor: pointer; user-select: none; width: fit-content;
+  }
+  .custom-toggle-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--dim); transition: color .15s;
+  }
+  .custom-toggle:hover .custom-toggle-label { color: var(--muted); }
+  .custom-toggle-arrow { font-size: 9px; color: var(--dim); transition: transform .2s, color .15s; }
+  .custom-toggle:hover .custom-toggle-arrow { color: var(--muted); }
+  .custom-toggle.open .custom-toggle-arrow { transform: rotate(90deg); }
+
+  .custom-panel {
+    display: none; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px; margin-top: 8px;
+  }
+  .custom-panel.open { display: block; }
+  .custom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  .custom-field { display: flex; flex-direction: column; gap: 4px; }
+  .custom-field-label {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .custom-field input[type=number] {
+    font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text);
+    background: var(--surface2); border: 1px solid var(--border2); border-radius: 5px;
+    padding: 6px 10px; width: 100%; outline: none; transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  .custom-field input[type=number]::-webkit-inner-spin-button,
+  .custom-field input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .custom-field input[type=number]:focus { border-color: var(--accent-dk); }
+  .custom-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0 10px; }
+  .custom-section-title {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--dim); margin-bottom: 8px;
+  }
+  .custom-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .custom-hint { font-size: 11px; color: var(--dim); }
+  .reset-btn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border2);
+    background: transparent; color: var(--dim); cursor: pointer; transition: all .15s;
+  }
+  .reset-btn:hover { color: var(--red); border-color: #4a1a1a; }
+
+  /* Result card */
+  .result { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 16px; }
+  .result-top { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
+  .result-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .tier-badge {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 4px; font-weight: 500;
+  }
+  .tier-min   { background: #2a1212; color: var(--red);   border: 1px solid #4a1a1a; }
+  .tier-caut  { background: #2a1e0e; color: var(--amber); border: 1px solid #4a3012; }
+  .tier-std   { background: #0e2018; color: var(--green); border: 1px solid #124028; }
+  .tier-exp   { background: #0e1e2a; color: var(--blue);  border: 1px solid #124060; }
+  .result-main { display: flex; align-items: baseline; gap: 10px; }
+  .stop-pct { font-family: var(--mono); font-size: 36px; font-weight: 500; color: var(--text); line-height: 1; }
+  .stop-dollar { font-family: var(--mono); font-size: 18px; color: var(--muted); }
+  .rationale { font-size: 12px; color: var(--muted); line-height: 1.6; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+
+  .rules-grid { display: grid; grid-template-columns: 1fr 1fr; }
+  .rule-cell { padding: 12px 16px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .rule-cell:nth-child(even) { border-right: none; }
+  .rule-cell:nth-child(3), .rule-cell:nth-child(4) { border-bottom: none; }
+  .rule-cell-label { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+  .rule-cell-val { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
+  .rule-cell-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+  .copy-row { padding: 10px 14px; display: flex; justify-content: flex-end; border-top: 1px solid var(--border); }
+  .copy-btn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 4px; border: 1px solid var(--border2);
+    background: transparent; color: var(--muted); cursor: pointer; transition: all .15s;
+  }
+  .copy-btn:hover { border-color: var(--accent-dk); color: var(--accent); }
+  .copy-btn.copied { color: var(--green); border-color: #124028; }
+
+  /* Trade grader */
+  .grader-wrap { margin-top: 20px; }
+  .grader-header {
+    display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px;
+  }
+  .grade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grade-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    cursor: pointer; transition: border-color .15s, background .15s;
+    user-select: none; position: relative; overflow: hidden;
+  }
+  .grade-card:hover { border-color: var(--border2); background: var(--surface2); }
+  .grade-card.selected { border-color: var(--accent-dk); background: #1c2410; }
+  .grade-card-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+  .grade-label {
+    font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text);
+    transition: color .15s;
+  }
+  .grade-card.selected .grade-label { color: var(--accent); }
+  .grade-pct { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: .04em; }
+  .grade-bar-track {
+    height: 2px; background: var(--border2); border-radius: 2px; margin-bottom: 8px; overflow: hidden;
+  }
+  .grade-bar-fill {
+    height: 100%; border-radius: 2px; background: var(--dim); transition: background .15s, width .3s;
+  }
+  .grade-card.selected .grade-bar-fill { background: var(--accent); }
+  .grade-dollar { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--muted); transition: color .15s; }
+  .grade-card.selected .grade-dollar { color: var(--text); }
+  .grade-sub { font-size: 11px; color: var(--dim); margin-top: 3px; }
+
+  /* Footer */
+  .footer { margin-top: 16px; font-family: var(--mono); font-size: 10px; color: var(--dim); text-align: center; letter-spacing: .05em; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <span class="header-dot"></span>
+      <span class="header-title">Daily Stop Calculator</span>
+    </div>
+    <span class="date-label" id="date-out">FRI, MAR 20</span>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Account equity</div>
+    <div class="equity-row">
+      <span class="equity-val" id="equity-out">$30,000</span>
+      <input type="range" id="equity" min="10000" max="150000" step="1000" value="30000" oninput="update()">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Recent performance</div>
+    <div class="pill-group" id="perf">
+      <div class="pill" data-v="streak_loss" onclick="pick(this,&#39;perf&#39;)">3+ red days</div>
+      <div class="pill" data-v="one_red" onclick="pick(this,&#39;perf&#39;)">1–2 red days</div>
+      <div class="pill active" data-v="neutral" onclick="pick(this,&#39;perf&#39;)">Flat / mixed</div>
+      <div class="pill" data-v="green_week" onclick="pick(this,&#39;perf&#39;)">Green this week</div>
+      <div class="pill" data-v="green_run" onclick="pick(this,&#39;perf&#39;)">Strong run</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Market conditions</div>
+    <div class="pill-group" id="mkt">
+      <div class="pill" data-v="high_vix" onclick="pick(this,&#39;mkt&#39;)">High vol / VIX spike</div>
+      <div class="pill active" data-v="normal" onclick="pick(this,&#39;mkt&#39;)">Normal</div>
+      <div class="pill" data-v="trending" onclick="pick(this,&#39;mkt&#39;)">Clean trend</div>
+      <div class="pill" data-v="choppy" onclick="pick(this,&#39;mkt&#39;)">Choppy / no follow</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Pre-market setup quality</div>
+    <div class="pill-group" id="setup">
+      <div class="pill" data-v="weak" onclick="pick(this,&#39;setup&#39;)">Weak / forced</div>
+      <div class="pill active" data-v="ok" onclick="pick(this,&#39;setup&#39;)">Decent</div>
+      <div class="pill" data-v="strong" onclick="pick(this,&#39;setup&#39;)">High conviction</div>
+    </div>
+  </div>
+
+  <!-- Customize thresholds -->
+  <div class="custom-toggle" id="custom-toggle" onclick="toggleCustom()">
+    <span class="custom-toggle-arrow">▶</span>
+    <span class="custom-toggle-label">Customize thresholds</span>
+  </div>
+  <div class="custom-panel" id="custom-panel">
+    <div class="custom-section-title">Base % by performance</div>
+    <div class="custom-grid">
+      <div class="custom-field">
+        <span class="custom-field-label">3+ red days</span>
+        <input type="number" id="c-streak_loss" value="1.0" min="0.1" max="10" step="0.25" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">1–2 red days</span>
+        <input type="number" id="c-one_red" value="1.5" min="0.1" max="10" step="0.25" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">Flat / mixed</span>
+        <input type="number" id="c-neutral" value="2.0" min="0.1" max="10" step="0.25" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">Green this week</span>
+        <input type="number" id="c-green_week" value="2.25" min="0.1" max="10" step="0.25" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">Strong run</span>
+        <input type="number" id="c-green_run" value="2.5" min="0.1" max="10" step="0.25" oninput="update()">
+      </div>
+    </div>
+    <hr class="custom-divider">
+    <div class="custom-section-title">Market condition modifiers (±%)</div>
+    <div class="custom-grid">
+      <div class="custom-field">
+        <span class="custom-field-label">High vol / VIX spike</span>
+        <input type="number" id="c-high_vix" value="-0.4" min="-5" max="5" step="0.05" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">Choppy / no follow</span>
+        <input type="number" id="c-choppy" value="-0.3" min="-5" max="5" step="0.05" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">Clean trend</span>
+        <input type="number" id="c-trending" value="0.2" min="-5" max="5" step="0.05" oninput="update()">
+      </div>
+    </div>
+    <hr class="custom-divider">
+    <div class="custom-section-title">Setup quality modifiers (±%)</div>
+    <div class="custom-grid">
+      <div class="custom-field">
+        <span class="custom-field-label">Weak / forced</span>
+        <input type="number" id="c-weak" value="-0.25" min="-5" max="5" step="0.05" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">High conviction</span>
+        <input type="number" id="c-strong" value="0.25" min="-5" max="5" step="0.05" oninput="update()">
+      </div>
+    </div>
+    <hr class="custom-divider">
+    <div class="custom-section-title">Floor &amp; ceiling</div>
+    <div class="custom-grid">
+      <div class="custom-field">
+        <span class="custom-field-label">Min stop %</span>
+        <input type="number" id="c-floor" value="1.0" min="0.1" max="10" step="0.25" oninput="update()">
+      </div>
+      <div class="custom-field">
+        <span class="custom-field-label">Max stop %</span>
+        <input type="number" id="c-ceiling" value="3.0" min="0.1" max="10" step="0.25" oninput="update()">
+      </div>
+    </div>
+    <div class="custom-footer">
+      <span class="custom-hint">Values auto-save as you type</span>
+      <button class="reset-btn" onclick="resetDefaults()">Reset defaults</button>
+    </div>
+  </div>
+
+  <!-- Result card -->
+  <div class="result" id="result-card">
+    <div class="result-top">
+      <div class="result-meta">
+        <span class="tier-badge tier-std" id="tier-badge">Standard</span>
+      </div>
+      <div class="result-main">
+        <span class="stop-pct" id="stop-pct">2.00%</span>
+        <span class="stop-dollar" id="stop-dollar">$600 max loss</span>
+      </div>
+    </div>
+    <div class="rationale" id="rationale">Neutral performance baseline.</div>
+    <div class="rules-grid">
+      <div class="rule-cell">
+        <div class="rule-cell-label">Daily hard stop</div>
+        <div class="rule-cell-val" id="r-daily">$600</div>
+        <div class="rule-cell-sub">Walk away. No exceptions.</div>
+      </div>
+      <div class="rule-cell">
+        <div class="rule-cell-label">Single trade max</div>
+        <div class="rule-cell-val" id="r-trade">$180</div>
+        <div class="rule-cell-sub">30% of daily stop</div>
+      </div>
+      <div class="rule-cell">
+        <div class="rule-cell-label">Midday limit</div>
+        <div class="rule-cell-val" id="r-mid">$330</div>
+        <div class="rule-cell-sub">Pause if hit by noon</div>
+      </div>
+      <div class="rule-cell">
+        <div class="rule-cell-label">Profit trail</div>
+        <div class="rule-cell-val" id="r-trail">$510</div>
+        <div class="rule-cell-sub">Never give back above</div>
+      </div>
+    </div>
+    <div class="copy-row">
+      <button class="copy-btn" id="copy-btn" onclick="copyRules()">Copy rules</button>
+    </div>
+  </div>
+
+  <!-- Trade risk allocator -->
+  <div class="grader-wrap">
+    <div class="grader-header">
+      <div class="section-label" style="margin-bottom:0;">Trade risk allocator</div>
+      <span style="font-family:var(--mono); font-size:9px; color:var(--dim); letter-spacing:.06em;">tap a grade to select</span>
+    </div>
+    <div class="grade-grid" id="grade-grid"><div class="grade-card selected" id="grade-card-0">
+        <div class="grade-card-top">
+          <span class="grade-label">A+</span>
+          <span class="grade-pct">80% of stop</span>
+        </div>
+        <div class="grade-bar-track">
+          <div class="grade-bar-fill" id="grade-bar-0" style="width:80%"></div>
+        </div>
+        <div class="grade-dollar" id="grade-dollar-0">$480</div>
+        <div class="grade-sub">max risk this trade</div>
+      </div><div class="grade-card" id="grade-card-1">
+        <div class="grade-card-top">
+          <span class="grade-label">A</span>
+          <span class="grade-pct">30% of stop</span>
+        </div>
+        <div class="grade-bar-track">
+          <div class="grade-bar-fill" id="grade-bar-1" style="width:30%"></div>
+        </div>
+        <div class="grade-dollar" id="grade-dollar-1">$180</div>
+        <div class="grade-sub">max risk this trade</div>
+      </div><div class="grade-card" id="grade-card-2">
+        <div class="grade-card-top">
+          <span class="grade-label">B</span>
+          <span class="grade-pct">15% of stop</span>
+        </div>
+        <div class="grade-bar-track">
+          <div class="grade-bar-fill" id="grade-bar-2" style="width:15%"></div>
+        </div>
+        <div class="grade-dollar" id="grade-dollar-2">$90</div>
+        <div class="grade-sub">max risk this trade</div>
+      </div><div class="grade-card" id="grade-card-3">
+        <div class="grade-card-top">
+          <span class="grade-label">C</span>
+          <span class="grade-pct">5% of stop</span>
+        </div>
+        <div class="grade-bar-track">
+          <div class="grade-bar-fill" id="grade-bar-3" style="width:5%"></div>
+        </div>
+        <div class="grade-dollar" id="grade-dollar-3">$30</div>
+        <div class="grade-sub">max risk this trade</div>
+      </div></div>
+  </div>
+
+  <div class="footer" id="footer-line">intraday swing · $30k equity · 1–3% range</div>
+
+</div>
+<script>
+  const d = new Date();
+  document.getElementById('date-out').textContent =
+    d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }).toUpperCase();
+
+  const GRADES = [
+    { label: 'A+', pct: 80 },
+    { label: 'A',  pct: 30 },
+    { label: 'B',  pct: 15 },
+    { label: 'C',  pct: 5  },
+  ];
+
+  const DEFAULTS = {
+    'c-streak_loss': 1.0, 'c-one_red': 1.5, 'c-neutral': 2.0,
+    'c-green_week': 2.25, 'c-green_run': 2.5,
+    'c-high_vix': -0.4, 'c-choppy': -0.3, 'c-trending': 0.2,
+    'c-weak': -0.25, 'c-strong': 0.25,
+    'c-floor': 1.0, 'c-ceiling': 3.0
+  };
+
+  function cv(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+
+  function toggleCustom() {
+    document.getElementById('custom-toggle').classList.toggle('open');
+    document.getElementById('custom-panel').classList.toggle('open');
+  }
+
+  function resetDefaults() {
+    Object.entries(DEFAULTS).forEach(([id, val]) => { document.getElementById(id).value = val; });
+    update();
+  }
+
+  function pick(el, group) {
+    document.querySelectorAll('#' + group + ' .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    update();
+  }
+
+  function getVal(group) {
+    const a = document.querySelector('#' + group + ' .pill.active');
+    return a ? a.dataset.v : null;
+  }
+
+  // Build grade cards once
+  function buildGradeGrid() {
+    const grid = document.getElementById('grade-grid');
+    grid.innerHTML = '';
+    GRADES.forEach((g, i) => {
+      const card = document.createElement('div');
+      card.className = 'grade-card' + (i === 0 ? ' selected' : '');
+      card.id = 'grade-card-' + i;
+      card.onclick = () => selectGrade(i);
+      card.innerHTML = `
+        <div class="grade-card-top">
+          <span class="grade-label">${g.label}</span>
+          <span class="grade-pct">${g.pct}% of stop</span>
+        </div>
+        <div class="grade-bar-track">
+          <div class="grade-bar-fill" id="grade-bar-${i}" style="width:${g.pct}%"></div>
+        </div>
+        <div class="grade-dollar" id="grade-dollar-${i}">—</div>
+        <div class="grade-sub">max risk this trade</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function selectGrade(idx) {
+    GRADES.forEach((_, i) => {
+      document.getElementById('grade-card-' + i).classList.toggle('selected', i === idx);
+    });
+  }
+
+  function updateGrades(dailyStop) {
+    GRADES.forEach((g, i) => {
+      const risk = dailyStop * (g.pct / 100);
+      document.getElementById('grade-dollar-' + i).textContent = fmt(risk);
+    });
+  }
+
+  function update() {
+    const equity  = parseInt(document.getElementById('equity').value);
+    const floor   = cv('c-floor');
+    const ceiling = cv('c-ceiling');
+
+    document.getElementById('equity-out').textContent = '$' + equity.toLocaleString();
+    document.getElementById('footer-line').textContent =
+      'intraday swing · $' + (equity / 1000).toFixed(0) + 'k equity · ' + floor + '–' + ceiling + '% range';
+
+    const perf  = getVal('perf');
+    const mkt   = getVal('mkt');
+    const setup = getVal('setup');
+
+    const perfMap = {
+      streak_loss: cv('c-streak_loss'), one_red: cv('c-one_red'), neutral: cv('c-neutral'),
+      green_week: cv('c-green_week'),   green_run: cv('c-green_run')
+    };
+    let pct = perfMap[perf] ?? cv('c-neutral');
+    if (mkt === 'high_vix')  pct += cv('c-high_vix');
+    if (mkt === 'choppy')    pct += cv('c-choppy');
+    if (mkt === 'trending')  pct += cv('c-trending');
+    if (setup === 'weak')    pct += cv('c-weak');
+    if (setup === 'strong')  pct += cv('c-strong');
+    pct = Math.min(ceiling, Math.max(floor, Math.round(pct * 100) / 100));
+
+    const daily = equity * pct / 100;
+    const trade = daily * 0.30;
+    const mid   = daily * 0.55;
+    const trail = daily * 0.85;
+
+    document.getElementById('stop-pct').textContent    = pct.toFixed(2) + '%';
+    document.getElementById('stop-dollar').textContent = fmt(daily) + ' max loss';
+    document.getElementById('r-daily').textContent     = fmt(daily);
+    document.getElementById('r-trade').textContent     = fmt(trade);
+    document.getElementById('r-mid').textContent       = fmt(mid);
+    document.getElementById('r-trail').textContent     = fmt(trail);
+
+    // Tier badge
+    const badge = document.getElementById('tier-badge');
+    const mid50 = (floor + ceiling) / 2;
+    let tierText, tierClass;
+    if      (pct <= floor + (mid50 - floor) * 0.4) { tierText = 'Capital protection'; tierClass = 'tier-min'; }
+    else if (pct <= mid50 * 0.95)                   { tierText = 'Cautious';           tierClass = 'tier-caut'; }
+    else if (pct <= mid50 * 1.15)                   { tierText = 'Standard';           tierClass = 'tier-std'; }
+    else                                             { tierText = 'Expanded';           tierClass = 'tier-exp'; }
+    badge.textContent = tierText;
+    badge.className = 'tier-badge ' + tierClass;
+
+    // Rationale
+    let r = [];
+    if      (perf === 'streak_loss') r.push('3+ red days — out of sync with tape. Minimum stop, reduce size, rebuild confidence.');
+    else if (perf === 'one_red')     r.push('Recent loss warrants caution — tighter than your standard baseline.');
+    else if (perf === 'green_week')  r.push('Net green week gives you real cushion — full risk is justified.');
+    else if (perf === 'green_run')   r.push('Strong run confirms edge alignment — expanded stop is earned, but protect it.');
+    else                             r.push('Neutral performance baseline.');
+    if (mkt === 'high_vix')  r.push('Elevated VIX chews through intraday swing stops faster — tighten accordingly.');
+    if (mkt === 'choppy')    r.push('Choppy tape punishes swing entries — reduce exposure and be selective.');
+    if (mkt === 'trending')  r.push('Clean trending conditions suit your style — a bit more room makes sense.');
+    if (setup === 'weak')    r.push('Weak pre-market read = higher overtrading risk. Tight stop keeps discipline intact.');
+    if (setup === 'strong')  r.push('High-conviction setup supports the upper end of your range.');
+    document.getElementById('rationale').textContent = r.join(' ');
+
+    // Update grade cards
+    updateGrades(daily);
+  }
+
+  function copyRules() {
+    const equity = parseInt(document.getElementById('equity').value);
+    const pct    = parseFloat(document.getElementById('stop-pct').textContent);
+    const daily  = equity * pct / 100;
+    const gradeLines = GRADES.map(g => {
+      const risk = daily * (g.pct / 100);
+      return `  Grade ${g.label} (${g.pct}%):  ${fmt(risk)}`;
+    }).join('\n');
+    const text = [
+      `DAILY STOP RULES — ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}`,
+      `─────────────────────────────`,
+      `Daily hard stop:   ${fmt(daily)}`,
+      `Single trade max:  ${fmt(daily * 0.30)}`,
+      `Midday limit:      ${fmt(daily * 0.55)}  (pause if hit by noon)`,
+      `Profit trail:      ${fmt(daily * 0.85)}  (never give back above this)`,
+      `─────────────────────────────`,
+      `Trade risk by grade:`,
+      gradeLines,
+      `─────────────────────────────`,
+      `Stop %: ${pct.toFixed(2)}%  |  Equity: ${fmt(equity)}`,
+    ].join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy rules'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  buildGradeGrid();
+  update();
+</script>
+
+
+</body></html>
